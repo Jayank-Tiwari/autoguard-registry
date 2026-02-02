@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Admin {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Vehicle {
+  id            Int      @id @default(autoincrement())
+  vehicleNumber String   @unique
+  ownerName     String
+  contactNumber String
+  isDisabled    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  emergencyContacts EmergencyContact[]
+}
+
+model EmergencyContact {
+  id        Int    @id @default(autoincrement())
+  label     String
+  phone     String
+  vehicleId Int
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+}
