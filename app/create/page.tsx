@@ -37,7 +37,7 @@ export default function CreatePage() {
                 contactNumber,
                 emergencyContacts: validContacts,
             });
-            router.push(`/v/${vehicleNumber}`);
+            router.push(`/qr/${vehicleNumber}`);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to create vehicle");
         } finally {
