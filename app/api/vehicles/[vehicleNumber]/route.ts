@@ -28,10 +28,12 @@ export async function GET(
       vehicleNumber: vehicle.vehicleNumber,
       ownerName: vehicle.ownerName,
       contactNumber: vehicle.contactNumber,
-      emergencyContacts: vehicle.emergencyContacts.map((c) => ({
-        label: c.label,
-        phone: c.phone,
-      })),
+      emergencyContacts: vehicle.emergencyContacts.map(
+        (c: { label: string; phone: string }) => ({
+          label: c.label,
+          phone: c.phone,
+        }),
+      ),
     });
   } catch (error) {
     console.error("Error fetching vehicle:", error);
