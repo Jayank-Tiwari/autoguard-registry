@@ -7,7 +7,7 @@ const JWT_SECRET = new TextEncoder().encode(
 
 const COOKIE_NAME = "admin_session";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Only protect /admin/dashboard routes
   if (request.nextUrl.pathname.startsWith("/admin/dashboard")) {
     const token = request.cookies.get(COOKIE_NAME)?.value;
