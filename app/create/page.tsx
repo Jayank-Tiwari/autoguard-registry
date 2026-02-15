@@ -12,6 +12,7 @@ export default function CreatePage() {
     const [emergencyContacts, setEmergencyContacts] = useState<
         { label: string; phone: string }[]
     >([{ label: "Police", phone: "112" }]);
+    const [consentGiven, setConsentGiven] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
@@ -32,12 +33,19 @@ export default function CreatePage() {
             return;
         }
 
+        if (!consentGiven) {
+            setError("You must agree to the terms and conditions to proceed");
+            setLoading(false);
+            return;
+        }
+
         try {
             await createVehicle({
                 vehicleNumber,
                 ownerName,
                 contactNumber,
                 emergencyContacts: validContacts,
+                consentGiven,
             });
             setSuccess(true);
             setTimeout(() => {
@@ -73,257 +81,306 @@ export default function CreatePage() {
     };
 
     return (
-        <div className="h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 overflow-hidden">
-            <div className="h-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col">
-                {/* Header Section */}
-                <div className="text-center mb-6">
-                    <div className="inline-flex items-center gap-3 bg-white rounded-full px-6 py-3 shadow-xl border-2 border-emerald-200 mb-5">
-                        <div className="p-2.5 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-2xl shadow-lg">
-                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+        <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+            {/* Header - Sticky on all screens for easy access */}
+            <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white shadow-emerald-200 shadow-md">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                             </svg>
                         </div>
-                        <span className="text-sm font-black text-emerald-700">AutoGuard Registration</span>
+                        <span className="font-bold text-slate-900 text-lg tracking-tight">AutoGuard Registry</span>
                     </div>
-                    <h1 className="text-3xl sm:text-5xl font-black bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent mb-2">
-                        Register Your Vehicle
-                    </h1>
-                    <p className="text-base sm:text-lg text-gray-700">
-                        Create a scannable emergency QR sticker in under a minute.
-                    </p>
                 </div>
+            </header>
 
-                <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] gap-6">
-                    {/* Main Form Card */}
-                    <div className="bg-white rounded-[2rem] shadow-2xl border-2 border-gray-100 flex flex-col min-h-0">
-                        {/* Form Header */}
-                        <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 px-6 sm:px-8 py-6">
-                            <h2 className="text-white text-lg font-black">Vehicle Information</h2>
-                            <p className="text-emerald-100 text-sm mt-1">Complete the form below to register your vehicle</p>
-                        </div>
+            <main className="flex-1 w-full max-w-7xl mx-auto py-6 sm:py-8 lg:py-10 px-4 sm:px-6 lg:px-8">
+                {/* Main Grid Layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
 
-                        {/* Form Content */}
-                        <form onSubmit={handleSubmit} className="px-6 sm:px-8 py-6 space-y-6 flex-1 min-h-0 overflow-y-auto">
-                            {/* Vehicle Number Field */}
-                            <div>
-                                <label
-                                    htmlFor="vehicleNumber"
-                                    className="block text-sm font-semibold text-gray-800 mb-3"
-                                >
-                                    Vehicle Number <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        id="vehicleNumber"
-                                        placeholder="e.g., DL 01 AB 1234"
-                                        value={vehicleNumber}
-                                        onChange={(e) => setVehicleNumber(e.target.value)}
-                                        required
-                                        className="w-full px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all placeholder-gray-400 text-gray-900 font-medium"
-                                    />
-                                </div>
-                                <p className="text-xs text-gray-500 mt-2">Format: State Registration Number</p>
+                    {/* Left Column: Form Content */}
+                    <div className="lg:col-span-8 w-full">
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="px-4 sm:px-6 py-5 border-b border-slate-100 bg-slate-50/50">
+                                <h1 className="text-lg sm:text-xl font-bold text-slate-900">Register New Vehicle</h1>
+                                <p className="text-sm text-slate-500 mt-1">Enter your vehicle details to generate an emergency QR code.</p>
                             </div>
 
-                            {/* Two Column Layout for Owner Details */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {/* Owner Name Field */}
-                                <div>
-                                    <label
-                                        htmlFor="ownerName"
-                                        className="block text-sm font-semibold text-gray-800 mb-3"
-                                    >
-                                        Owner Name <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="ownerName"
-                                        placeholder="John Doe"
-                                        value={ownerName}
-                                        onChange={(e) => setOwnerName(e.target.value)}
-                                        required
-                                        className="w-full px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all placeholder-gray-400 text-gray-900"
-                                    />
-                                </div>
+                            <form onSubmit={handleSubmit} className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
+                                {/* Section 1: Vehicle & Owner */}
+                                <div className="space-y-5 sm:space-y-6">
+                                    <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs">1</span>
+                                        Primary Information
+                                    </h2>
 
-                                {/* Contact Number Field */}
-                                <div>
-                                    <label
-                                        htmlFor="contactNumber"
-                                        className="block text-sm font-semibold text-gray-800 mb-3"
-                                    >
-                                        Contact Number <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        id="contactNumber"
-                                        placeholder="+91 98765 43210"
-                                        value={contactNumber}
-                                        onChange={(e) => setContactNumber(e.target.value)}
-                                        required
-                                        className="w-full px-5 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all placeholder-gray-400 text-gray-900"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Emergency Contacts Section */}
-                            <div className="pt-4 border-t border-gray-200">
-                                <div className="mb-4">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <label className="block text-sm font-semibold text-gray-800">
-                                            Emergency Contacts <span className="text-red-500">*</span>
-                                        </label>
-                                        <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
-                                            {emergencyContacts.length}/10
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-gray-600 mb-3">Add contacts that will appear on the QR page</p>
-
-                                    <div className="space-y-3">
-                                        {emergencyContacts.map((contact, index) => (
-                                            <div key={index} className="flex flex-col sm:flex-row gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-emerald-300 transition-colors">
-                                                <select
-                                                    value={contact.label}
-                                                    onChange={(e) =>
-                                                        updateEmergencyContact(index, "label", e.target.value)
-                                                    }
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+                                        <div className="col-span-1 md:col-span-2">
+                                            <label htmlFor="vehicleNumber" className="block text-sm font-medium text-slate-700 mb-1.5">
+                                                Vehicle Registration Number <span className="text-red-500">*</span>
+                                            </label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    id="vehicleNumber"
+                                                    /* text-base on mobile prevents iOS zoom, sm:text-sm on larger screens */
+                                                    className="block w-full pl-10 pr-3 py-3 sm:py-2.5 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-shadow text-base sm:text-sm font-medium uppercase"
+                                                    placeholder="DL 01 AB 1234"
+                                                    value={vehicleNumber}
+                                                    onChange={(e) => setVehicleNumber(e.target.value)}
                                                     required
-                                                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-gray-900 font-medium"
-                                                >
-                                                    <option value="">Select Contact Type</option>
-                                                    <option value="Police">Police</option>
-                                                    <option value="Ambulance">Ambulance</option>
-                                                    <option value="Fire">Fire</option>
-                                                    <option value="Custom">Custom</option>
-                                                </select>
+                                                />
+                                            </div>
+                                            <p className="mt-1.5 text-xs text-slate-500">Enter without spaces for best results (e.g. MH12AB1234)</p>
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="ownerName" className="block text-sm font-medium text-slate-700 mb-1.5">
+                                                Owner Full Name <span className="text-red-500">*</span>
+                                            </label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                    </svg>
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    id="ownerName"
+                                                    className="block w-full pl-10 pr-3 py-3 sm:py-2.5 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-shadow text-base sm:text-sm"
+                                                    placeholder="John Doe"
+                                                    value={ownerName}
+                                                    onChange={(e) => setOwnerName(e.target.value)}
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="contactNumber" className="block text-sm font-medium text-slate-700 mb-1.5">
+                                                Primary Contact Number <span className="text-red-500">*</span>
+                                            </label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                    </svg>
+                                                </div>
                                                 <input
                                                     type="tel"
-                                                    placeholder="Phone Number"
-                                                    value={contact.phone}
-                                                    onChange={(e) =>
-                                                        updateEmergencyContact(index, "phone", e.target.value)
-                                                    }
+                                                    id="contactNumber"
+                                                    className="block w-full pl-10 pr-3 py-3 sm:py-2.5 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-shadow text-base sm:text-sm"
+                                                    placeholder="+91 98765 43210"
+                                                    value={contactNumber}
+                                                    onChange={(e) => setContactNumber(e.target.value)}
                                                     required
-                                                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-gray-900 placeholder-gray-400"
                                                 />
-                                                {emergencyContacts.length > 1 && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeEmergencyContact(index)}
-                                                        className="px-4 py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors font-medium text-sm sm:text-base"
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="border-t border-slate-100"></div>
+
+                                {/* Section 2: Emergency Contacts */}
+                                <div className="space-y-5 sm:space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                            <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs">2</span>
+                                            Emergency Contacts
+                                        </h2>
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                                            {emergencyContacts.length} / 10
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {emergencyContacts.map((contact, index) => (
+                                            /* Stack vertically on mobile, horizontally on tablet+ */
+                                            <div key={index} className="flex flex-col sm:flex-row gap-4 p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:border-emerald-200 transition-colors group">
+                                                <div className="flex-1">
+                                                    <label className="block text-xs font-semibold text-slate-500 mb-1">Relation / Label</label>
+                                                    <select
+                                                        value={contact.label}
+                                                        onChange={(e) => updateEmergencyContact(index, "label", e.target.value)}
+                                                        required
+                                                        className="block w-full py-2.5 sm:py-2 pl-3 pr-10 border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white shadow-sm text-base sm:text-sm"
                                                     >
-                                                        <span className="hidden sm:inline">Remove</span>
-                                                        <span className="sm:hidden">✕</span>
-                                                    </button>
+                                                        <option value="">Select Type</option>
+                                                        <option value="Police">Police</option>
+                                                        <option value="Ambulance">Ambulance</option>
+                                                        <option value="Fire">Fire</option>
+                                                        <option value="Custom">Custom</option>
+                                                    </select>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className="block text-xs font-semibold text-slate-500 mb-1">Phone Number</label>
+                                                    <input
+                                                        type="tel"
+                                                        value={contact.phone}
+                                                        onChange={(e) => updateEmergencyContact(index, "phone", e.target.value)}
+                                                        required
+                                                        placeholder="Enter number"
+                                                        className="block w-full px-3 py-2.5 sm:py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white shadow-sm text-base sm:text-sm"
+                                                    />
+                                                </div>
+                                                {emergencyContacts.length > 1 && (
+                                                    <div className="flex items-end justify-end sm:justify-start">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeEmergencyContact(index)}
+                                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                            title="Remove Contact"
+                                                        >
+                                                            <span className="sr-only">Remove</span>
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
                                         ))}
-                                    </div>
 
-                                    {emergencyContacts.length < 10 && (
-                                        <button
-                                            type="button"
-                                            onClick={addEmergencyContact}
-                                            className="mt-3 w-full px-4 py-3 border-2 border-dashed border-emerald-300 text-emerald-700 rounded-lg hover:bg-emerald-50 transition-colors font-semibold"
-                                        >
-                                            + Add Emergency Contact
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Error Alert */}
-                            {error && (
-                                <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-                                    <div className="flex">
-                                        <div className="flex-shrink-0">
-                                            <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                            </svg>
-                                        </div>
-                                        <div className="ml-3">
-                                            <p className="text-sm font-semibold text-red-800">{error}</p>
-                                        </div>
+                                        {emergencyContacts.length < 10 && (
+                                            <button
+                                                type="button"
+                                                onClick={addEmergencyContact}
+                                                className="w-full py-3 sm:py-3 border-2 border-dashed border-slate-300 rounded-xl text-sm font-medium text-slate-600 hover:border-emerald-400 hover:text-emerald-700 hover:bg-emerald-50/50 transition-all flex items-center justify-center gap-2 active:bg-emerald-50"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                </svg>
+                                                Add Another Contact
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
-                            )}
 
-                            {/* Success Message */}
-                            {success && (
-                                <div className="p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-lg">
-                                    <div className="flex">
-                                        <div className="flex-shrink-0">
-                                            <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                            </svg>
+                                <div className="border-t border-slate-100"></div>
+
+                                {/* Section 3: Consent */}
+                                <div className="space-y-4">
+                                    <div className="flex items-start gap-4 p-4 rounded-xl bg-amber-50 border border-amber-100">
+                                        <div className="flex items-center h-5">
+                                            <input
+                                                id="consent"
+                                                type="checkbox"
+                                                checked={consentGiven}
+                                                onChange={(e) => setConsentGiven(e.target.checked)}
+                                                className="focus:ring-amber-500 h-5 w-5 text-amber-600 border-gray-300 rounded cursor-pointer"
+                                                required
+                                            />
                                         </div>
-                                        <div className="ml-3">
-                                            <p className="text-sm font-semibold text-emerald-800">Vehicle registered successfully! Redirecting...</p>
+                                        <div className="text-sm">
+                                            <label htmlFor="consent" className="font-medium text-amber-900 block mb-1 cursor-pointer">
+                                                Data Consent & Privacy
+                                            </label>
+                                            <p className="text-amber-800/80 leading-relaxed text-xs sm:text-sm">
+                                                I authorize AutoGuard to store this vehicle information. I understand it will be publicly accessible via the generated QR code to facilitate emergency contact.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
-                            )}
 
-                            {/* Submit Button */}
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 text-white py-3 sm:py-3.5 rounded-2xl font-black hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-base shadow-2xl hover:shadow-3xl"
-                            >
-                                {loading ? (
-                                    <span className="flex items-center justify-center">
-                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                {/* Messages */}
+                                {error && (
+                                    <div className="p-4 rounded-lg bg-red-50 border border-red-200 flex items-start gap-3">
+                                        <svg className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        Processing...
-                                    </span>
-                                ) : (
-                                    <span className="flex items-center justify-center">
-                                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                        </svg>
-                                        Register Vehicle
-                                    </span>
+                                        <p className="text-sm text-red-800 font-medium">{error}</p>
+                                    </div>
                                 )}
-                            </button>
-                        </form>
+
+                                {success && (
+                                    <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 flex items-start gap-3">
+                                        <svg className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <p className="text-sm text-emerald-800 font-medium">Vehicle registered successfully! Redirecting to QR code...</p>
+                                    </div>
+                                )}
+
+                                {/* Action Buttons */}
+                                <div className="flex justify-end pt-2">
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full sm:w-auto px-8 py-3.5 sm:py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 text-base sm:text-sm"
+                                    >
+                                        {loading ? (
+                                            <>
+                                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Processing...
+                                            </>
+                                        ) : (
+                                            "Register Vehicle"
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
 
-                    {/* Side Panel */}
-                    <div className="bg-gradient-to-br from-teal-50 via-cyan-50 to-emerald-50 rounded-[2rem] border-2 border-emerald-200 shadow-xl p-6 flex flex-col gap-5">
-                        <h3 className="text-lg font-black text-gray-900">Registration Flow</h3>
-                        <div className="space-y-4">
-                            <div className="flex items-start gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center font-black">1</div>
-                                <div>
-                                    <p className="text-sm font-black text-gray-900">Create QR Sticker</p>
-                                    <p className="text-xs text-gray-600">A printable QR is generated instantly after submit.</p>
+                    {/* Right Column: Info & Process (Sticky on Desktop) */}
+                    <div className="lg:col-span-4 w-full space-y-6 lg:sticky lg:top-24">
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 sm:p-6">
+                            <h3 className="text-lg font-bold text-slate-900 mb-6">How it works</h3>
+                            <div className="relative pl-8 space-y-8 before:absolute before:left-3.5 before:top-2 before:h-full before:w-0.5 before:bg-slate-100">
+                                <div className="relative">
+                                    <div className="absolute -left-8 w-7 h-7 bg-emerald-100 rounded-full border-2 border-white flex items-center justify-center">
+                                        <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span>
+                                    </div>
+                                    <h4 className="text-sm font-bold text-slate-900">Register Vehicle</h4>
+                                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                        Fill out the form with accurate contact details.
+                                    </p>
                                 </div>
-                            </div>
-                            <div className="flex items-start gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white flex items-center justify-center font-black">2</div>
-                                <div>
-                                    <p className="text-sm font-black text-gray-900">Attach to Windshield</p>
-                                    <p className="text-xs text-gray-600">Place the sticker on the lower-right corner.</p>
+                                <div className="relative">
+                                    <div className="absolute -left-8 w-7 h-7 bg-blue-100 rounded-full border-2 border-white flex items-center justify-center">
+                                        <span className="w-2.5 h-2.5 bg-blue-500 rounded-full"></span>
+                                    </div>
+                                    <h4 className="text-sm font-bold text-slate-900">Get QR Code</h4>
+                                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                        Instantly generate a unique QR code for your windshield.
+                                    </p>
                                 </div>
-                            </div>
-                            <div className="flex items-start gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-amber-500 text-white flex items-center justify-center font-black">3</div>
-                                <div>
-                                    <p className="text-sm font-black text-gray-900">Ready for Emergencies</p>
-                                    <p className="text-xs text-gray-600">Anyone can scan to reach emergency contacts.</p>
+                                <div className="relative">
+                                    <div className="absolute -left-8 w-7 h-7 bg-purple-100 rounded-full border-2 border-white flex items-center justify-center">
+                                        <span className="w-2.5 h-2.5 bg-purple-500 rounded-full"></span>
+                                    </div>
+                                    <h4 className="text-sm font-bold text-slate-900">Stay Protected</h4>
+                                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                        Bystanders can scan to call you or emergency services instantly.
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                        <div className="mt-auto rounded-2xl border border-emerald-200 bg-white/80 p-4 shadow-inner">
-                            <p className="text-xs font-black text-emerald-700">Tip</p>
-                            <p className="text-xs text-gray-700">Use waterproof label paper for best durability.</p>
+
+                        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl shadow-lg p-5 sm:p-6 text-white overflow-hidden relative">
+                            <div className="relative z-10">
+                                <h3 className="font-bold text-lg mb-2">Pro Tip</h3>
+                                <p className="text-sm text-slate-300 leading-relaxed">
+                                    For the best durability, print your QR code on <span className="text-white font-semibold">weatherproof vinyl sticker paper</span> and apply it to the bottom-left corner of your windshield.
+                                </p>
+                            </div>
+                            {/* Decorative element */}
+                            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-5 rounded-full blur-xl"></div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

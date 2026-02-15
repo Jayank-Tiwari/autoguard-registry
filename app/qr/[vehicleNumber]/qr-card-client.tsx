@@ -1,467 +1,477 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 
 interface QRCardClientProps {
-    vehicleNumber: string;
-    isAdmin: boolean;
+  vehicleNumber: string;
+  isAdmin: boolean;
+  origin: string;
 }
 
-export default function QRCardClient({ vehicleNumber, isAdmin }: QRCardClientProps) {
-    const [copied, setCopied] = useState(false);
-    const [qrSize, setQrSize] = useState(180);
+export default function QRCardClient({
+  vehicleNumber,
+  isAdmin,
+  origin,
+}: QRCardClientProps) {
+  const [copied, setCopied] = useState(false);
 
-    const qrUrl = useMemo(() => {
-        if (!vehicleNumber || typeof window === "undefined") {
-            return "";
-        }
+  const qrUrl = `${origin}/v/${vehicleNumber}`;
 
-        return `${window.location.origin}/v/${vehicleNumber}`;
-    }, [vehicleNumber]);
+  const handlePrint = () => {
+    window.print();
+  };
 
-    useEffect(() => {
-        const updateQrSize = () => {
-            const nextSize = Math.min(200, Math.max(140, Math.floor(window.innerWidth * 0.45)));
-            setQrSize(nextSize);
-        };
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(qrUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
-        updateQrSize();
-        window.addEventListener("resize", updateQrSize);
-        return () => window.removeEventListener("resize", updateQrSize);
-    }, []);
-
-    const handlePrint = () => {
-        window.print();
-    };
-
-    const handleCopyLink = () => {
-        if (!qrUrl) {
-            return;
-        }
-
-        navigator.clipboard.writeText(qrUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
-    if (!vehicleNumber) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center px-4">
-                <div className="text-center">
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-2xl mb-6 shadow-2xl animate-pulse">
-                        <svg className="animate-spin h-10 w-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                    </div>
-                    <p className="text-xl text-gray-700 font-bold">Generating your QR sticker...</p>
-                </div>
-            </div>
-        );
-    }
-
+  if (!vehicleNumber) {
     return (
-        <>
-            <style jsx global>{`
-                .print-card {
-                    display: none;
-                }
-                
-                @media print {
-                    @page {
-                        size: 80mm 80mm;
-                        margin: 0;
-                    }
-                    
-                    * {
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
-                        color-adjust: exact;
-                    }
-                    
-                    html, body {
-                        margin: 0;
-                        padding: 0;
-                        background: white;
-                    }
-
-                    body > :not(.print-card) {
-                        display: none !important;
-                    }
-                    
-                    .no-print {
-                        display: none !important;
-                    }
-                    
-                    .print-card {
-                        width: 80mm !important;
-                        height: 80mm !important;
-                        margin: 0 !important;
-                        padding: 6mm !important;
-                        box-sizing: border-box !important;
-                        display: flex !important;
-                        align-items: center;
-                        justify-content: center;
-                        background: #d8f5eb !important;
-                        box-shadow: none !important;
-                        border: 3px solid #000 !important;
-                        border-radius: 10px !important;
-                        position: fixed !important;
-                        top: 0 !important;
-                        left: 0 !important;
-                    }
-                }
-            `}</style>
-
-            <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 py-8 px-4 sm:px-6 lg:px-10">
-                <div className="max-w-7xl mx-auto">
-                    {/* Success Banner */}
-                    <div className="text-center mb-10 no-print">
-                        <div className="inline-flex items-center gap-4 bg-white rounded-full px-6 py-4 sm:px-10 sm:py-5 shadow-2xl border-2 border-emerald-300 mb-8 animate-bounce">
-                            <svg className="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span className="text-2xl font-black text-emerald-800">Registration Complete!</span>
-                        </div>
-                        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent mb-6 tracking-tight">
-                            Your QR Sticker is Ready
-                        </h1>
-                        <p className="text-xl sm:text-2xl text-gray-700 max-w-4xl mx-auto font-semibold leading-relaxed">
-                            Vehicle <span className="font-black text-teal-700 text-2xl sm:text-3xl">{vehicleNumber}</span> successfully registered
-                        </p>
-                        <p className="text-lg text-gray-600 mt-3">Print your emergency windshield sticker below</p>
-                    </div>
-
-                    {/* Main Content */}
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 xl:gap-10 mb-12">
-                        {/* Left: QR Preview Card */}
-                        <div className="space-y-6">
-                            <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden border-2 border-gray-100 no-print hover:shadow-3xl transition-all duration-500 transform hover:scale-[1.02]">
-                                {/* Animated Gradient Header */}
-                                <div className="relative bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 px-10 py-14 overflow-hidden">
-                                    <div className="absolute inset-0">
-                                        <div className="absolute top-0 right-0 w-96 h-96 bg-white opacity-10 rounded-full -mr-48 -mt-48 animate-pulse"></div>
-                                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-white opacity-10 rounded-full -ml-32 -mb-32 animate-pulse delay-150"></div>
-                                    </div>
-                                    <div className="relative flex items-center gap-4">
-                                        <div className="p-4 bg-white/30 rounded-2xl backdrop-blur-md shadow-xl">
-                                            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <h2 className="text-white text-3xl font-black tracking-tight">Windshield QR Sticker</h2>
-                                            <p className="text-emerald-100 text-base font-medium mt-1">Professional • Durable • Emergency-Ready</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* QR Code Display - Screen Version */}
-                                <div className="p-6 sm:p-10 lg:p-12 bg-gradient-to-b from-gray-50 to-white">
-                                    <div className="bg-white border-[6px] border-gray-300 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-2xl mx-auto hover:border-teal-400 transition-all duration-300 max-w-[420px] w-full">
-                                        <div className="text-center space-y-6">
-                                            {/* Top Section */}
-                                            <div className="pb-6 border-b-2 border-gray-200">
-                                                <div className="inline-block p-3 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-2xl mb-3 shadow-md">
-                                                    <svg className="w-10 h-10 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                                    </svg>
-                                                </div>
-                                                <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-2">
-                                                    AutoGuard Registry
-                                                </h3>
-                                                <p className="text-sm sm:text-base text-gray-600 font-bold">
-                                                    Emergency Contact System
-                                                </p>
-                                            </div>
-
-                                            {/* QR Code */}
-                                            <div className="py-6">
-                                                <div className="bg-gradient-to-br from-gray-100 to-gray-200 p-4 sm:p-5 rounded-2xl inline-block shadow-xl border-[3px] border-gray-400">
-                                                    <QRCodeCanvas
-                                                        value={qrUrl}
-                                                        size={qrSize}
-                                                        level="H"
-                                                        includeMargin={true}
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {/* Bottom Section */}
-                                            <div className="pt-6 border-t-2 border-gray-200">
-                                                <div className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-2xl py-4 px-4 sm:px-6 mb-4 shadow-inner">
-                                                    <p className="text-xs sm:text-sm text-gray-500 font-black uppercase tracking-widest mb-2">Vehicle Number</p>
-                                                    <p className="text-2xl sm:text-3xl font-black text-gray-900 tracking-wider break-all">
-                                                        {vehicleNumber}
-                                                    </p>
-                                                </div>
-                                                <div className="flex items-center justify-center gap-3 text-gray-600">
-                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                    </svg>
-                                                    <p className="text-sm sm:text-base font-bold">
-                                                        Please Scan to connect with car owner.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-wrap items-center justify-center gap-4 mt-8 text-gray-500 text-sm sm:text-base font-semibold">
-                                        <span className="flex items-center gap-2">✂️ Cut along border</span>
-                                        <span className="flex items-center gap-2">💧 Waterproof</span>
-                                        <span className="flex items-center gap-2">🚗 Apply to windshield</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Right: Action Cards and Features */}
-                        <div className="space-y-6">
-                            {/* Quick Actions Card */}
-                            <div className="bg-white rounded-[2rem] shadow-2xl border-2 border-gray-100 p-6 sm:p-8 lg:p-10 no-print">
-                                <h3 className="text-2xl sm:text-3xl font-black text-gray-900 mb-8 flex items-center gap-3">
-                                    <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                    </svg>
-                                    Quick Actions
-                                </h3>
-                                <div className="space-y-4">
-                                    {/* Print Button */}
-                                    <button
-                                        onClick={handlePrint}
-                                        className="group w-full px-6 sm:px-8 py-5 sm:py-6 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-700 text-white font-black text-base sm:text-lg rounded-2xl transition-all duration-300 shadow-2xl hover:shadow-3xl flex items-center justify-between transform hover:scale-[1.02] active:scale-[0.98]"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-3 bg-white/30 rounded-xl backdrop-blur-sm">
-                                                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4H9a2 2 0 00-2 2v2a2 2 0 002 2h10a2 2 0 002-2v-2a2 2 0 00-2-2m-6-4V9m0 0V5a2 2 0 012-2h.5a2 2 0 012 2v4m0 0a2 2 0 012 2v4m0 0V9a2 2 0 012 2v4" />
-                                                </svg>
-                                            </div>
-                                            <span>Print Sticker</span>
-                                        </div>
-                                        <svg className="w-6 h-6 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </button>
-
-                                    {/* Copy Link Button */}
-                                    <button
-                                        onClick={handleCopyLink}
-                                        className="group w-full px-6 sm:px-8 py-5 sm:py-6 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-black text-base sm:text-lg rounded-2xl transition-all duration-300 shadow-2xl hover:shadow-3xl flex items-center justify-between transform hover:scale-[1.02] active:scale-[0.98]"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-3 bg-white/30 rounded-xl backdrop-blur-sm">
-                                                {copied ? (
-                                                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                ) : (
-                                                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                                    </svg>
-                                                )}
-                                            </div>
-                                            <span>{copied ? "Link Copied!" : "Copy QR Link"}</span>
-                                        </div>
-                                        <svg className="w-6 h-6 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </button>
-
-                                    {/* Back to Dashboard */}
-                                    {isAdmin && (
-                                        <a
-                                            href="/admin/dashboard"
-                                            className="group w-full px-6 sm:px-8 py-5 sm:py-6 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-white font-black text-base sm:text-lg rounded-2xl transition-all duration-300 shadow-2xl hover:shadow-3xl flex items-center justify-between transform hover:scale-[1.02] active:scale-[0.98]"
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                                                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                                    </svg>
-                                                </div>
-                                                <span>Dashboard</span>
-                                            </div>
-                                            <svg className="w-6 h-6 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-                                            </svg>
-                                        </a>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Features Card */}
-                            <div className="bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 rounded-[2rem] border-2 border-teal-300 p-6 sm:p-8 lg:p-10 no-print shadow-xl">
-                                <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-7 flex items-center gap-3">
-                                    <svg className="w-7 h-7 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                                    </svg>
-                                    Key Features
-                                </h3>
-                                <div className="space-y-5">
-                                    <div className="flex gap-4 items-start">
-                                        <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg">
-                                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p className="font-black text-gray-900 text-lg mb-1">Instant Scan</p>
-                                            <p className="text-sm text-gray-600 font-medium leading-relaxed">Quick QR code access from any smartphone camera</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-4 items-start">
-                                        <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-                                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p className="font-black text-gray-900 text-lg mb-1">Emergency Ready</p>
-                                            <p className="text-sm text-gray-600 font-medium leading-relaxed">Critical information accessible 24/7 in emergencies</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-4 items-start">
-                                        <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg">
-                                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p className="font-black text-gray-900 text-lg mb-1">Weatherproof</p>
-                                            <p className="text-sm text-gray-600 font-medium leading-relaxed">Durable waterproof design for long-term outdoor use</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Bottom Info Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 no-print">
-                        <div className="bg-white rounded-3xl shadow-2xl border-2 border-emerald-100 p-6 sm:p-8 hover:shadow-3xl hover:border-emerald-300 transition-all duration-300 transform hover:scale-[1.02]">
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="p-4 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-2xl shadow-md">
-                                    <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4H9a2 2 0 00-2 2v2a2 2 0 002 2h10a2 2 0 002-2v-2a2 2 0 00-2-2m-6-4V9m0 0V5a2 2 0 012-2h.5a2 2 0 012 2v4m0 0a2 2 0 012 2v4m0 0V9a2 2 0 012 2v4" />
-                                    </svg>
-                                </div>
-                                <h4 className="text-xl font-black text-gray-900">Print Tips</h4>
-                            </div>
-                            <ul className="space-y-3 text-base text-gray-600 font-medium">
-                                <li className="flex items-start gap-3">
-                                    <span className="text-emerald-600 font-black text-xl mt-0.5">✓</span>
-                                    <span>Use adhesive waterproof label paper</span>
-                                </li>
-                                <li className="flex items-start gap-3">
-                                    <span className="text-emerald-600 font-black text-xl mt-0.5">✓</span>
-                                    <span>Print in color for best QR readability</span>
-                                </li>
-                                <li className="flex items-start gap-3">
-                                    <span className="text-emerald-600 font-black text-xl mt-0.5">✓</span>
-                                    <span>Standard size: 80mm × 80mm sticker</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div className="bg-white rounded-3xl shadow-2xl border-2 border-cyan-100 p-6 sm:p-8 hover:shadow-3xl hover:border-cyan-300 transition-all duration-300 transform hover:scale-[1.02]">
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="p-4 bg-gradient-to-br from-cyan-100 to-blue-100 rounded-2xl shadow-md">
-                                    <svg className="w-8 h-8 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m7 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <h4 className="text-xl font-black text-gray-900">Application</h4>
-                            </div>
-                            <ul className="space-y-3 text-base text-gray-600 font-medium">
-                                <li className="flex items-start gap-3">
-                                    <span className="text-cyan-600 font-black text-xl mt-0.5">✓</span>
-                                    <span>Clean windshield with rubbing alcohol</span>
-                                </li>
-                                <li className="flex items-start gap-3">
-                                    <span className="text-cyan-600 font-black text-xl mt-0.5">✓</span>
-                                    <span>Apply to bottom right windshield corner</span>
-                                </li>
-                                <li className="flex items-start gap-3">
-                                    <span className="text-cyan-600 font-black text-xl mt-0.5">✓</span>
-                                    <span>Press firmly for 30 seconds to adhere</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div className="bg-white rounded-3xl shadow-2xl border-2 border-teal-100 p-6 sm:p-8 hover:shadow-3xl hover:border-teal-300 transition-all duration-300 transform hover:scale-[1.02]">
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="p-4 bg-gradient-to-br from-teal-100 to-emerald-100 rounded-2xl shadow-md">
-                                    <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <h4 className="text-xl font-black text-gray-900">Important</h4>
-                            </div>
-                            <ul className="space-y-3 text-base text-gray-600 font-medium">
-                                <li className="flex items-start gap-3">
-                                    <span className="text-teal-600 font-black text-xl mt-0.5">✓</span>
-                                    <span>Avoid prolonged direct sunlight exposure</span>
-                                </li>
-                                <li className="flex items-start gap-3">
-                                    <span className="text-teal-600 font-black text-xl mt-0.5">✓</span>
-                                    <span>Keep clear of driver&apos;s field of vision</span>
-                                </li>
-                                <li className="flex items-start gap-3">
-                                    <span className="text-teal-600 font-black text-xl mt-0.5">✓</span>
-                                    <span>Test scan before final placement</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Print Version - Hidden on Screen */}
-            <div className="print-card">
-                <div className="text-center h-full flex flex-col items-center justify-center">
-                    <div style={{ marginBottom: "10px" }}>
-                        <h3 style={{ fontSize: "18px", fontWeight: "900", margin: "0 0 3px 0", color: "#0f172a" }}>
-                            AutoGuard
-                        </h3>
-                        <p style={{ fontSize: "11px", margin: "0", color: "#64748b", fontWeight: "600" }}>
-                            Emergency QR
-                        </p>
-                    </div>
-
-                    <div
-                        style={{
-                            margin: "10px 0",
-                            padding: "8px",
-                            border: "3px solid #000",
-                            display: "inline-block",
-                            borderRadius: "8px",
-                            backgroundColor: "#d8f5eb",
-                        }}
-                    >
-                        <QRCodeCanvas
-                            value={qrUrl}
-                            size={110}
-                            level="H"
-                            includeMargin={false}
-                            bgColor="#d8f5eb"
-                        />
-                    </div>
-
-                    <div style={{ marginTop: "10px" }}>
-                        <p style={{ fontSize: "16px", fontWeight: "900", margin: "0", color: "#0f172a", letterSpacing: "0.5px" }}>
-                            {vehicleNumber}
-                        </p>
-                    </div>
-
-                    <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "2px solid #cbd5e1", width: "100%" }}>
-                        <p style={{ fontSize: "10px", margin: "0", color: "#475569", fontWeight: "800" }}>
-                            Please Scan to connect with car owner.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <p className="text-slate-600 font-medium">Loading...</p>
+      </div>
     );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
+      {/* Page Setup for Print - Just handles dimensions */}
+      <style jsx global>{`
+        @media print {
+          @page {
+            size: 80mm 80mm;
+            margin: 0;
+          }
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            background-color: white;
+          }
+        }
+      `}</style>
+
+      {/* SCREEN UI WRAPPER: Hidden when printing */}
+      <div className="print:hidden flex flex-col min-h-screen">
+        <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white shadow-md">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                  />
+                </svg>
+              </div>
+              <span className="font-bold text-slate-900 text-lg tracking-tight">
+                AutoGuard Registry
+              </span>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 w-full max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          {/* Header Section */}
+          <div className="mb-8 sm:mb-12">
+            <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="text-center md:text-left">
+                <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                    Registration Successful
+                  </span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                  Ready for the Road
+                </h1>
+                <p className="text-slate-600 mt-1">
+                  Vehicle{" "}
+                  <span className="font-semibold text-slate-900">
+                    {vehicleNumber}
+                  </span>{" "}
+                  is now secured.
+                </p>
+              </div>
+              <button
+                onClick={handlePrint}
+                className="px-8 py-3 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-lg shadow-md flex items-center gap-2 transition-colors"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4H9a2 2 0 00-2 2v2a2 2 0 002 2h10a2 2 0 002-2v-2a2 2 0 00-2-2m-6-4V9m0 0V5a2 2 0 012-2h.5a2 2 0 012 2v4m0 0a2 2 0 012 2v4m0 0V9a2 2 0 012 2v4"
+                  />
+                </svg>
+                Print Sticker
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* LEFT COLUMN: Sticker Preview */}
+            <div className="lg:col-span-7 space-y-6">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                  <h2 className="font-semibold text-slate-900">
+                    Sticker Preview
+                  </h2>
+                  <span className="text-xs text-slate-500 uppercase tracking-wider font-bold">
+                    80mm × 80mm
+                  </span>
+                </div>
+
+                {/* Preview Container */}
+                <div className="p-8 sm:p-12 bg-slate-100 flex justify-center items-center">
+                  <div className="relative group perspective-1000">
+                    {/* --- STICKER CARD START --- */}
+                    <div className="bg-white border-4 border-slate-200 rounded-2xl p-5 w-[280px] shadow-xl flex flex-col items-center text-center relative z-10 gap-4">
+                      <div className="w-full border-b border-slate-100 pb-3">
+                        <div className="flex items-center justify-center gap-2 text-emerald-600 mb-1">
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2.5}
+                              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                            />
+                          </svg>
+                          <span className="font-black tracking-tight text-lg">
+                            AUTOGUARD
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                          Emergency QR
+                        </p>
+                      </div>
+
+                      <div className="bg-white p-1.5 rounded-xl border-2 border-slate-900 shadow-sm w-full flex justify-center">
+                        <QRCodeCanvas
+                          value={qrUrl}
+                          size={130}
+                          level="H"
+                          includeMargin={true}
+                          style={{
+                            width: "100%",
+                            height: "auto",
+                            maxWidth: "130px",
+                          }}
+                        />
+                      </div>
+
+                      <div className="w-full">
+                        <div className="bg-slate-50 rounded-lg py-2 px-2 border border-slate-100">
+                          <p className="text-[10px] text-slate-400 font-bold uppercase mb-0.5">
+                            Vehicle Registration
+                          </p>
+                          <p className="text-xl font-black text-slate-900 tracking-wider font-mono uppercase break-all leading-tight">
+                            {vehicleNumber}
+                          </p>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-semibold mt-2">
+                          Scan to contact owner
+                        </p>
+                      </div>
+                    </div>
+                    {/* --- STICKER CARD END --- */}
+
+                    <div className="absolute inset-0 bg-slate-900/10 rounded-2xl blur-xl transform translate-y-4 translate-x-4 -z-0"></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Printing Checklist */}
+              <div className="bg-white rounded-xl border border-slate-200 p-6 flex flex-col sm:flex-row gap-6">
+                <div className="flex-1">
+                  <h3 className="font-bold text-slate-900 mb-3">
+                    Printing Checklist
+                  </h3>
+                  <ul className="space-y-3 text-sm text-slate-600">
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-xs">
+                        1
+                      </div>
+                      <span>
+                        Print at <strong>100% scale</strong> (Do not scale to
+                        fit)
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-xs">
+                        2
+                      </div>
+                      <span>Cut along the outer black border</span>
+                    </li>
+                  </ul>
+                </div>
+                <div className="w-px bg-slate-100 hidden sm:block"></div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-slate-900 mb-3">Placement</h3>
+                  <ul className="space-y-3 text-sm text-slate-600">
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-xs">
+                        1
+                      </div>
+                      <span>Clean windshield glass thoroughly</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <div className="mt-0.5 w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-xs">
+                        2
+                      </div>
+                      <span>Stick on bottom-left corner (inside)</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN: Sidebar */}
+            <div className="lg:col-span-5 space-y-6">
+              {/* Quick Actions */}
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 className="font-bold text-slate-900 mb-4">Quick Actions</h3>
+                <div className="space-y-3">
+                  <button
+                    onClick={handleCopyLink}
+                    className="w-full px-4 py-3 bg-white border-2 border-slate-200 hover:border-emerald-500 hover:text-emerald-700 text-slate-600 font-medium rounded-lg transition-all flex items-center justify-between group"
+                  >
+                    <span className="flex items-center gap-2">
+                      <svg
+                        className="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition-colors"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        />
+                      </svg>
+                      {copied ? "Link Copied!" : "Copy Public Link"}
+                    </span>
+                    {copied && (
+                      <svg
+                        className="w-5 h-5 text-emerald-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    )}
+                  </button>
+
+                  {isAdmin && (
+                    <a
+                      href="/admin/dashboard"
+                      className="w-full px-4 py-3 bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-600 font-medium rounded-lg transition-all flex items-center justify-between hover:bg-slate-50"
+                    >
+                      <span className="flex items-center gap-2">
+                        <svg
+                          className="w-5 h-5 text-slate-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                          />
+                        </svg>
+                        Dashboard
+                      </span>
+                      <span className="text-slate-400">→</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Paper Recommendation */}
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 relative overflow-hidden">
+                <div className="relative z-10">
+                  <h3 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
+                    <svg
+                      className="w-5 h-5 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    Paper Guide
+                  </h3>
+                  <p className="text-sm text-blue-800 leading-relaxed mb-3">
+                    This design is sized for <strong>A4 Paper</strong>.
+                  </p>
+                  <div className="bg-white/60 rounded-lg p-3 border border-blue-200/50 space-y-2">
+                    <p className="text-xs text-blue-900">
+                      1. Print on a full{" "}
+                      <strong>A4 Waterproof Vinyl Sticker Sheet</strong>.
+                    </p>
+                    <p className="text-xs text-blue-900">
+                      2. <strong>Cut out</strong> the sticker along the black
+                      border (80mm x 80mm).
+                    </p>
+                  </div>
+                  <p className="text-xs text-blue-700 mt-3 font-medium flex items-center gap-1">
+                    <span className="bg-blue-200 text-blue-800 text-[10px] px-1.5 rounded">
+                      NOTE
+                    </span>
+                    Do not stick the entire A4 sheet.
+                  </p>
+                </div>
+              </div>
+
+              {/* Safety Tips */}
+              <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl shadow-lg p-6 text-white overflow-hidden relative">
+                <div className="relative z-10">
+                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                    <svg
+                      className="w-5 h-5 text-emerald-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                      />
+                    </svg>
+                    Safety Tips
+                  </h3>
+                  <ul className="space-y-3 text-sm text-slate-300">
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-emerald-400 mt-1">•</span>
+                      <span>
+                        Update your emergency contacts immediately if they
+                        change.
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-emerald-400 mt-1">•</span>
+                      <span>
+                        Test the QR code scanning regularly to ensure it works.
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-emerald-400 mt-1">•</span>
+                      <span>
+                        Place the sticker where it won&apos;t obstruct the
+                        driver&apos;s view.
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-5 rounded-full blur-xl"></div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* PRINT ONLY CONTENT */}
+      {/* The hidden print:flex utility makes this visible ONLY during print, and positions it fullscreen */}
+      <div className="hidden print:flex print:fixed print:inset-0 print:items-center print:justify-center print:bg-white print:z-[9999]">
+        <div
+          className="flex flex-col items-center justify-center text-center bg-[#ecfdf5] border-[3px] border-black rounded-xl box-border gap-4"
+          style={{ width: "80mm", height: "80mm", padding: "6mm" }}
+        >
+          <div className="w-full border-b border-black/10 pb-3">
+            <div className="flex items-center justify-center gap-1.5 text-emerald-800">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                style={{ strokeWidth: 3 }}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+              <span
+                className="font-black text-xl tracking-tight"
+                style={{ color: "#064e3b" }}
+              >
+                AUTOGUARD
+              </span>
+            </div>
+            <p
+              className="text-[9px] font-bold uppercase tracking-widest mt-0.5"
+              style={{ color: "#047857" }}
+            >
+              Emergency QR
+            </p>
+          </div>
+
+          <div className="bg-white p-1.5 rounded-lg border-2 border-black shadow-sm">
+            <QRCodeCanvas
+              value={qrUrl}
+              size={110}
+              level="H"
+              includeMargin={false}
+            />
+          </div>
+
+          <div className="w-full">
+            <div className="bg-white/50 rounded px-1 border border-black/5 py-1 mb-1">
+              <p
+                className="text-[9px] font-bold text-black/60 uppercase mb-0.5"
+                style={{ fontSize: "8px" }}
+              >
+                Vehicle Registration
+              </p>
+              <p
+                className="text-[14px] font-black text-black tracking-wider font-mono uppercase break-all leading-none"
+                style={{ fontFamily: "monospace" }}
+              >
+                {vehicleNumber}
+              </p>
+            </div>
+            <p className="text-[8px] text-emerald-900 font-bold uppercase mt-1">
+              Scan for Emergency Contact
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
